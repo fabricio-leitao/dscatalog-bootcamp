@@ -5,6 +5,7 @@ import Card from '../Card';
 import { ProductsResponse } from 'core/types/Product';
 import { makeRequest } from 'core/utils/request';
 import Pagination from 'core/components/Pagination';
+import CardLoader from '../Loaders/ProductCardLoader';
 
 const List = () => {
   const [productsResponse, setProductsResponse] = useState<ProductsResponse>();
@@ -40,9 +41,13 @@ const List = () => {
         adicionar
       </button>
       <div className="admin-list-container">
-        {productsResponse?.content.map((product) => (
-          <Card product={product} key={product.id} />
-        ))}
+        {isLoading ? (
+          <CardLoader />
+        ) : (
+          productsResponse?.content.map((product) => (
+            <Card product={product} key={product.id} />
+          ))
+        )}
         {productsResponse && (
           <Pagination
             totalPages={productsResponse.totalPages}
