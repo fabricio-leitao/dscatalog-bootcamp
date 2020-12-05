@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './styles.scss';
 import { useHistory } from 'react-router-dom';
 import Card from '../Card';
 import { ProductsResponse } from 'core/types/Product';
-import { makeRequest } from 'core/utils/request';
+import { makeRequest, makePrivateRequest } from 'core/utils/request';
 import Pagination from 'core/components/Pagination';
 import CardLoader from '../Loaders/ProductCardLoader';
+import { toast } from 'react-toastify';
 
 const List = () => {
   const [productsResponse, setProductsResponse] = useState<ProductsResponse>();
   const [isLoading, setIsLoading] = useState(false);
   const [activePage, setActivePage] = useState(0);
 
-  useEffect(() => {
+  const getProducts = useCallback(() => {
     const params = {
       page: activePage,
       linesPerPage: 4,
@@ -27,10 +28,32 @@ const List = () => {
         setIsLoading(false);
       });
   }, [activePage]);
+
+  useEffect(() => {
+    getProducts();
+  }, [getProducts]);
   const history = useHistory();
 
   const handleCreate = () => {
     history.push('/admin/products/create');
+  };
+
+  const onRemove = (productId: number) => {
+    const confirm = window.confirm('Deseja excluir este produto?');
+
+    if (confirm) {
+      makePrivateRequest({
+        url: `/products/${productId}`,
+        method: 'DELETE',
+      })
+        .then(() => {
+          toast.info('Produto deletado com sucesso!');
+          getProducts();
+        })
+        .catch(() => {
+          toast.error('Error ao tentar deletar produto!');
+        });
+    }
   };
   return (
     <div className="admin-products-list">
@@ -45,7 +68,7 @@ const List = () => {
           <CardLoader />
         ) : (
           productsResponse?.content.map((product) => (
-            <Card product={product} key={product.id} />
+            <Card product={product} key={product.id} onRemove={onRemove} />
           ))
         )}
         {productsResponse && (
